@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "main": "./src/main.tsx",
-  "scripts": {
-    "dev": "tailwindcss -i src/styles.input.css -o src/styles.generated.css && sh -c 'tailwindcss -i src/styles.input.css -o src/styles.generated.css --watch & vite; kill $!'",
-    "build": "tailwindcss -i src/styles.input.css -o src/styles.generated.css --minify && vite build",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+ "scripts": {
+   "dev": "tailwindcss -i src/styles.input.css -o src/styles.generated.css && vite",
+   "build": "tailwindcss -i src/styles.input.css -o src/styles.generated.css --minify && vite build",
+   "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@effect/atom-react": "4.0.0-beta.83",
