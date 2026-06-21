@@ -96,3 +96,4 @@ pnpm --filter @proxus/server run agent:tutor "Crea un quiz corto de una pregunta
 ## Nota sobre runtime y package manager
 
 El monorepo se instala y se orquesta con `pnpm`. El server corre en Node usando `tsx` para ejecutar TypeScript en desarrollo; la web corre con Vite.
+## arvind 
