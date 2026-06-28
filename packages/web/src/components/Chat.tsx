@@ -1,6 +1,6 @@
 import { useAtomRefresh } from "@effect/atom-react";
 import type { AgentMessage } from "@proxus/shared";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 import "streamdown/styles.css";
 import { artifactsQuery } from "../domain/artifacts/atoms.ts";
@@ -14,7 +14,12 @@ const starterPrompts = [
   "Explain the hardest concept in my notes step by step"
 ] as const;
 
-export function Chat() {
+interface ChatProps {
+  readonly externalMessage?: string | undefined;
+  readonly onExternalMessageConsumed?: (() => void) | undefined;
+}
+
+export function Chat({ externalMessage, onExternalMessageConsumed }: ChatProps) {
   const [messages, setMessages] = useState<readonly AgentMessage[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -68,6 +73,13 @@ export function Chat() {
       setIsSending(false);
     }
   };
+
+  useEffect(() => {
+    if (externalMessage !== undefined && externalMessage.length > 0) {
+      onExternalMessageConsumed?.();
+      void submit(externalMessage);
+    }
+  }, [externalMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="grid h-screen max-h-screen min-w-0 grid-rows-[auto_1fr_auto_auto] bg-slate-950 max-md:h-auto max-md:max-h-none">

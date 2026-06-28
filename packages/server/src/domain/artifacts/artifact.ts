@@ -9,6 +9,7 @@ export type QuestionOption = typeof QuestionOption.Type;
 export const MultipleChoiceQuestion = Schema.Struct({
   type: Schema.Literal("multiple-choice"),
   id: Schema.String,
+  topicId: Schema.optional(Schema.String),
   prompt: Schema.String,
   options: Schema.Array(QuestionOption),
   correctOptionId: Schema.String,
@@ -19,6 +20,7 @@ export type MultipleChoiceQuestion = typeof MultipleChoiceQuestion.Type;
 export const TrueFalseQuestion = Schema.Struct({
   type: Schema.Literal("true-false"),
   id: Schema.String,
+  topicId: Schema.optional(Schema.String),
   prompt: Schema.String,
   correctAnswer: Schema.Boolean,
   explanation: Schema.String
@@ -28,6 +30,7 @@ export type TrueFalseQuestion = typeof TrueFalseQuestion.Type;
 export const ShortAnswerQuestion = Schema.Struct({
   type: Schema.Literal("short-answer"),
   id: Schema.String,
+  topicId: Schema.optional(Schema.String),
   prompt: Schema.String,
   expectedAnswer: Schema.String,
   maxScore: Schema.Number

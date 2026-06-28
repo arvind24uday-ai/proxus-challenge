@@ -2,13 +2,16 @@ import { useAtomValue } from "@effect/atom-react";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
 import { artifactsQuery } from "../domain/artifacts/atoms.ts";
 import { materialsQuery } from "../domain/materials/atoms.ts";
+import { MistakeHistory } from "./MistakeHistory.tsx";
+import { ProgressPanel } from "./ProgressPanel.tsx";
 
 interface SidebarProps {
   readonly selectedArtifactId: string | null;
   readonly onSelectArtifact: (artifactId: string) => void;
+  readonly onSendMessage?: ((message: string) => void) | undefined;
 }
 
-export function Sidebar({ selectedArtifactId, onSelectArtifact }: SidebarProps) {
+export function Sidebar({ selectedArtifactId, onSelectArtifact, onSendMessage }: SidebarProps) {
   const materials = useAtomValue(materialsQuery);
   const artifacts = useAtomValue(artifactsQuery);
 
@@ -23,6 +26,9 @@ export function Sidebar({ selectedArtifactId, onSelectArtifact }: SidebarProps) 
           <span className="block text-slate-400 text-sm">Academic assistant</span>
         </div>
       </div>
+
+      <ProgressPanel onSendMessage={onSendMessage} />
+      <MistakeHistory />
 
       <section className="mb-6">
         <div className="mb-3 flex items-center justify-between gap-4">
