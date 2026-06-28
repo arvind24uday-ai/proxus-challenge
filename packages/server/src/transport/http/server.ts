@@ -10,6 +10,8 @@ import { TutorChatService, TutorChatServiceLive } from "../../domain/agents/acad
 import { FileArtifactRepository } from "../../infra/artifacts/file-artifact-repository.ts";
 import { FileMaterialRepository } from "../../infra/materials/file-material-repository.ts";
 import { PopplerPdfService } from "../../infra/materials/poppler-pdf-service.ts";
+import { FileStudentProfileRepository } from "../../infra/student/file-student-profile-repository.ts";
+import { StudentProfileServiceLive } from "../../domain/student/StudentProfileService.ts";
 import { HttpHandlersLive } from "./handlers.ts";
 
 const ApiRoutes = HttpApiBuilder.layer(ProxusApi, {
@@ -58,11 +60,13 @@ const InfraLive = Layer.mergeAll(
   FileMaterialRepository.layer(".data/materials/pdfs").pipe(
     Layer.provide(PopplerPdfService.layer)
   ),
-  FileArtifactRepository.layer(".data/artifacts")
+  FileArtifactRepository.layer(".data/artifacts"),
+  FileStudentProfileRepository.layer(".data")
 );
 
 export const HttpServerLive = HttpRouter.serve(Routes).pipe(
   Layer.provide(DomainLive),
+  Layer.provide(StudentProfileServiceLive),
   Layer.provide(InfraLive),
   Layer.provide(NodeHttpServer.layer(
     () => createServer(),

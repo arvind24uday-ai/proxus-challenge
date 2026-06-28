@@ -11,11 +11,15 @@ import { PopplerPdfService } from "../../infra/materials/poppler-pdf-service.ts"
 import { FileArtifactRepository } from "../../infra/artifacts/file-artifact-repository.ts";
 import { makeMaterialCommands } from "./academic-tutor/material-commands.ts";
 import { makeArtifactCommands } from "./academic-tutor/artifact-commands.ts";
+import { makeStudentCommands } from "./academic-tutor/student-commands.ts";
 import { AcademicTutorSkills } from "./academic-tutor/skills/index.ts";
+import { StudentProfileService, StudentProfileServiceLive } from "../student/StudentProfileService.ts";
+import { FileStudentProfileRepository } from "../../infra/student/file-student-profile-repository.ts";
 
 export const makeAcademicTutorHarness = (
   materialRepository: MaterialRepository,
-  artifactRepository: ArtifactRepository
+  artifactRepository: ArtifactRepository,
+  studentProfileService: typeof StudentProfileService.Service
 ) => AgentHarness.make({
   name: `You are an academic tutor agent.
 
@@ -24,7 +28,8 @@ Be precise, pedagogical, and honest about what you can infer from the available 
   skills: AcademicTutorSkills,
   commands: [
     makeMaterialCommands(materialRepository),
-    makeArtifactCommands(artifactRepository)
+    makeArtifactCommands(artifactRepository, studentProfileService),
+    makeStudentCommands(artifactRepository, studentProfileService)
   ]
 });
 
@@ -34,13 +39,14 @@ export const academicTutorAgent = Effect.gen(function* () {
   const sessionRepository = yield* SessionRepository;
   const materialRepository = yield* MaterialRepository;
   const artifactRepository = yield* ArtifactRepository;
+  const studentProfileService = yield* StudentProfileService;
   const task = process.argv.slice(2).join(" ").trim() || "List my uploaded materials.";
   const sessionId = process.env.AGENT_SESSION_ID ?? "academic-tutor-demo";
   const storedSession = yield* sessionRepository.getSession(sessionId).pipe(
     Effect.catchTag("SessionNotFound", () => sessionRepository.makeSession({ id: sessionId }))
   );
 
-  const harness = makeAcademicTutorHarness(materialRepository, artifactRepository);
+  const harness = makeAcademicTutorHarness(materialRepository, artifactRepository, studentProfileService);
   const session = AgentSession.make(harness);
 
   console.log(`Provider: ${provider}`);
@@ -88,6 +94,11 @@ export const academicTutorAgent = Effect.gen(function* () {
     ),
     FileArtifactRepository.layer(".data/artifacts").pipe(
       Layer.provide(NodeServices.layer)
+    ),
+    StudentProfileServiceLive.pipe(
+      Layer.provide(FileStudentProfileRepository.layer(".data").pipe(
+        Layer.provide(NodeServices.layer)
+      ))
     )
   ))
 );

@@ -3,6 +3,7 @@ import { GeminiModel } from "../../gemini.ts";
 import { AgentSession } from "../../harness/index.ts";
 import { type AgentMessage } from "../../harness/message.ts";
 import { makeAcademicTutorHarness } from "../../academic-tutor.ts";
+import { StudentProfileService } from "../../../student/StudentProfileService.ts";
 import {
   Artifact,
   ArtifactAttempt,
@@ -285,10 +286,19 @@ const toPdfMaterial = (material: MaterialFixture): PdfMaterial => ({
   uploadedAt: material.uploadedAt
 });
 
+const noopStudentProfileService = Layer.succeed(StudentProfileService, {
+  getProfile: () => Effect.succeed({ topics: [], lastUpdatedAt: new Date().toISOString() } as const),
+  getWeakTopics: () => Effect.succeed([] as const),
+  getMistakes: () => Effect.succeed([] as const),
+  recordFromAttempt: (_attempt: unknown, _artifact: unknown) =>
+    Effect.succeed({ topics: [], lastUpdatedAt: new Date().toISOString() } as const)
+});
+
 const makeEvalLayer = (testCase: ArtifactAuthoringEvalCase) => Layer.mergeAll(
   InMemoryArtifactRepository,
   Layer.succeed(MaterialRepository, makeMaterialRepository(testCase.materials ?? [])),
-  GeminiModel
+  GeminiModel,
+  noopStudentProfileService
 );
 
 const shouldCreateExpectedArtifact = (): AcceptanceCriterion => ({
@@ -400,7 +410,8 @@ const runEvalCase = (
 ) => Effect.gen(function* () {
   const materialRepository = yield* MaterialRepository;
   const artifactRepository = yield* ArtifactRepository;
-  const harness = makeAcademicTutorHarness(materialRepository, artifactRepository);
+  const studentProfileService = yield* StudentProfileService;
+  const harness = makeAcademicTutorHarness(materialRepository, artifactRepository, studentProfileService);
   const session = AgentSession.make(harness);
   const result = yield* session.run({
     input: testCase.input,

@@ -5,6 +5,7 @@ import { Sidebar } from "./components/Sidebar.tsx";
 
 export function App() {
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | undefined>();
 
   return (
     <div
@@ -15,9 +16,16 @@ export function App() {
           : "340px minmax(0, 1fr) 420px"
       }}
     >
-      <Sidebar selectedArtifactId={selectedArtifactId} onSelectArtifact={setSelectedArtifactId} />
+      <Sidebar
+        selectedArtifactId={selectedArtifactId}
+        onSelectArtifact={setSelectedArtifactId}
+        onSendMessage={setPendingMessage}
+      />
       {selectedArtifactId !== null && <ArtifactWorkspace artifactId={selectedArtifactId} />}
-      <Chat />
+      <Chat
+        externalMessage={pendingMessage}
+        onExternalMessageConsumed={() => setPendingMessage(undefined)}
+      />
     </div>
   );
 }

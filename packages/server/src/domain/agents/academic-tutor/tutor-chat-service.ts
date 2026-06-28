@@ -5,6 +5,7 @@ import { ArtifactRepository } from "../../artifacts/artifact.ts";
 import { MaterialRepository } from "../../materials/material.ts";
 import { AgentSession } from "../harness/index.ts";
 import { makeAcademicTutorHarness } from "../academic-tutor.ts";
+import { StudentProfileService } from "../../student/StudentProfileService.ts";
 
 export interface TutorChatService {
   readonly sendMessage: (
@@ -24,7 +25,8 @@ export const TutorChatServiceLive = Layer.effect(
   Effect.gen(function* () {
     const materialRepository = yield* MaterialRepository;
     const artifactRepository = yield* ArtifactRepository;
-    const harness = makeAcademicTutorHarness(materialRepository, artifactRepository);
+    const studentProfileService = yield* StudentProfileService;
+    const harness = makeAcademicTutorHarness(materialRepository, artifactRepository, studentProfileService);
     const session = AgentSession.make(harness);
 
     const sessionInput = (input: TutorChatRequest) => ({

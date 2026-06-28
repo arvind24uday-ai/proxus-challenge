@@ -4,6 +4,7 @@ import { ProxusApi } from "@proxus/shared";
 import { TutorChatService } from "../../domain/agents/academic-tutor/tutor-chat-service.ts";
 import { ArtifactRepository, type Artifact } from "../../domain/artifacts/artifact.ts";
 import { MaterialRepository } from "../../domain/materials/material.ts";
+import { StudentProfileService } from "../../domain/student/StudentProfileService.ts";
 
 export const TutorHttpHandlers = HttpApiBuilder.group(
   ProxusApi,
@@ -60,8 +61,28 @@ export const ArtifactsHttpHandlers = HttpApiBuilder.group(
   })
 );
 
+export const StudentHttpHandlers = HttpApiBuilder.group(
+  ProxusApi,
+  "student",
+  Effect.fn(function* (handlers) {
+    const studentService = yield* StudentProfileService;
+
+    return handlers
+      .handle("profile", () =>
+        studentService.getProfile().pipe(Effect.orDie)
+      )
+      .handle("weakTopics", () =>
+        studentService.getWeakTopics().pipe(
+          Effect.map((topics) => ({ topics })),
+          Effect.orDie
+        )
+      );
+  })
+);
+
 export const HttpHandlersLive = Layer.mergeAll(
   TutorHttpHandlers,
   MaterialsHttpHandlers,
-  ArtifactsHttpHandlers
+  ArtifactsHttpHandlers,
+  StudentHttpHandlers
 );

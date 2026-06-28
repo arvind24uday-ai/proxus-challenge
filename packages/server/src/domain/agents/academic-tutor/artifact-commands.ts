@@ -14,6 +14,7 @@ import {
   SubmitAttemptInput,
   type ArtifactRepository
 } from "../../artifacts/artifact.ts";
+import type { StudentProfileService } from "../../student/StudentProfileService.ts";
 
 const UnknownFromJson = Schema.fromJsonString(Schema.Unknown);
 const SubmitAttemptInputFromJson = Schema.fromJsonString(SubmitAttemptInput);
@@ -108,7 +109,10 @@ const decodeSubmitAttemptInput = (json: string) =>
     Effect.mapError((reason) => new ArtifactRepositorySerializationError({ reason }))
   );
 
-export const makeArtifactCommands = (repository: ArtifactRepository) => {
+export const makeArtifactCommands = (
+  repository: ArtifactRepository,
+  studentProfileService: typeof StudentProfileService.Service
+) => {
   const list = AgentCli.Command.withExamples([
     { command: "artifacts list", description: "List all saved artifacts" },
     { command: "artifacts list quiz", description: "List quiz artifacts only" }
@@ -220,6 +224,16 @@ export const makeArtifactCommands = (repository: ArtifactRepository) => {
         attemptId: AgentCli.Argument.string("attemptId")
       }, ({ attemptId }) =>
         repository.gradeAttempt(attemptId).pipe(
+          Effect.tap((graded) => {
+            if (graded.status !== "graded") return Effect.void;
+            return repository.getArtifact(graded.artifactId).pipe(
+              Effect.flatMap((artifact) =>
+                studentProfileService.recordFromAttempt(graded, artifact)
+              ),
+              Effect.catch(() => Effect.void),
+              Effect.asVoid
+            );
+          }),
           Effect.map(renderAttempt),
           Effect.catch((error) => Effect.succeed(renderArtifactError(error)))
         )

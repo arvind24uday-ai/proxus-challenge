@@ -139,6 +139,8 @@ function ExerciseSolver({ artifact }: { readonly artifact: Extract<Artifact, { r
 
       {attempt?.status === "graded" && <AttemptSummary attempt={attempt} />}
 
+      {attempt?.status === "graded" && <TopicBreakdown attempt={attempt} artifact={artifact} />}
+
       <footer className="sticky bottom-0 mt-6 rounded-3xl border border-slate-800 bg-slate-950/95 p-4 backdrop-blur">
         {attempt === null
           ? (
@@ -283,6 +285,57 @@ function TrueFalseInput({
         </label>
       ))}
     </div>
+  );
+}
+
+function TopicBreakdown({
+  attempt,
+  artifact
+}: {
+  readonly attempt: Extract<ArtifactAttempt, { readonly status: "graded" }>;
+  readonly artifact: Extract<Artifact, { readonly kind: "quiz" | "test" }>;
+}) {
+  const topicMap = new Map<string, { label: string; correct: number; total: number }>();
+
+  for (const correction of attempt.corrections) {
+    const question = artifact.questions.find((q) => q.id === correction.questionId);
+    const topicId = (question as { topicId?: string }).topicId;
+    if (topicId === undefined) continue;
+
+    const current = topicMap.get(topicId) ?? { label: topicId, correct: 0, total: 0 };
+    let score = 0;
+    let max = 1;
+
+    if (correction.questionType === "multiple-choice" || correction.questionType === "true-false") {
+      score = correction.correct ? 1 : 0;
+    } else if (correction.questionType === "short-answer") {
+      score = correction.score;
+      max = correction.maxScore;
+    }
+
+    topicMap.set(topicId, { label: topicId, correct: current.correct + score, total: current.total + max });
+  }
+
+  if (topicMap.size === 0) return null;
+
+  return (
+    <section className="mt-4 rounded-3xl border border-slate-800 bg-slate-900 p-5">
+      <p className="mb-3 font-bold text-sky-400 text-xs uppercase tracking-widest">Topic breakdown</p>
+      <ul className="grid gap-2">
+        {Array.from(topicMap.entries()).map(([topicId, { label, correct, total }]) => {
+          const rate = total > 0 ? correct / total : 0;
+          const isGood = rate >= 0.7;
+          return (
+            <li key={topicId} className="flex items-center justify-between gap-3">
+              <span className="text-slate-200 text-sm font-medium">{label}</span>
+              <span className={`text-sm font-semibold ${isGood ? "text-emerald-300" : "text-amber-300"}`}>
+                {isGood ? `${Math.round(rate * 100)}% — Keep it up!` : `${Math.round(rate * 100)}% — Let's review this`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
